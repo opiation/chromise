@@ -19,6 +19,10 @@
     function promise(/* args */) {
       let args = Array.prototype.slice.call(arguments);
 
+      if (typeof args[args.length - 1] === "function") {
+          return fn.apply(context, args);
+      }
+
       function executor(resolve, reject) {
         function callback(value) {
           if (chrome.runtime.lastError !== undefined && chrome.runtime.lastError !== null) {
