@@ -5,9 +5,11 @@
 "use strict";
 
 (function () {
-    // Accepts a method taking a callback function as its last parameter and
-    // returns a function that returns a Promise the if the last argument is
-    // not a function
+    // promisify accepts a method that itself expects a callback function and
+    // returns a Promise-returning version of said method.  If the resulting
+    // method receives a function as its last parameter, the orignal callback
+    // version is invoked with the last argument as a callback.  If the last
+    // argument is not a function, the promise-returning version is used.
     function promisify(fn, context) {
 
         return function () {
