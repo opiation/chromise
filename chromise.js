@@ -5,24 +5,33 @@
 "use strict";
 
 (function () {
-    // Default promisifier
+    // Accepts a method taking a callback function as its last parameter and
+    // returns a function that returns a Promise the if the last argument is
+    // not a function
     function promisify(fn, context) {
 
         return function () {
             const args = Array.prototype.slice.call(arguments);
+            // This can eventually be replaced with Array.from(arguments)
 
+            // If the last argument is a function, assume the method is being
+            // invoked in the callback style and use the former callback version
             if (typeof args[args.length - 1] === "function") {
                 return fn.apply(context, args);
             }
 
             return new Promise(function (resolve, reject) {
                 function callback(value) {
-                    if (chrome.runtime.lastError !== undefined && chrome.runtime.lastError !== null) {
+                    // According to the documentation, this will be defined
+                    // during callback invocation if there's an error.  In most
+                    // tested cases, this undefined check is sufficient
+                    if (chrome.runtime.lastError !== undefined) {
                         return reject(chrome.runtime.lastError);
                     }
 
                     if (arguments.length > 1) {
                         value = Array.prototype.slice.call(value);
+                        // This can also be replaced with Array.from eventually
                     }
 
                     resolve(value);
@@ -35,7 +44,7 @@
 
     function replace_methods(object, methods) {
         methods.forEach(function (name) {
-            let fn = object[name];
+            const fn = object[name];
 
             if (typeof fn !== "function") {
                 return;
