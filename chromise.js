@@ -1,10 +1,27 @@
-/*global
-    Array, chrome, Promise
+/*global Array, chrome, Object, Promise */
+
+/*property
+    accessibilityFeatures, alarms, animationPolicy, apply, autoclick,
+    automaticDownloads, automation, bookmarks, browserAction, browsingData,
+    call, commands, concat, config, contentSettings, contextMenus, cookies,
+    cpu, debugger, desktopCapture, deviceAttributes, devtools, documentScan,
+    downloads, enterprise, extension, fileBrowserHandler, fileSystemProvider,
+    fontSettings, forEach, fullscreen, gcm, highContrast, history, i18n,
+    identity, idle, images, ime, input, inspectedWindow, instanceID,
+    javascript, keys, largeCursor, lastError, length, local, location, managed,
+    management, memory, mouselock, network, notifications, pageAction,
+    pageCapture, panels, permissions, platformKeys, plugins, popups, processes,
+    prototype, proxy, runtime, screenMagnifier, sessions, settings,
+    signedInDevices, slice, spokenFeedback, stickyKeys, storage, sync, system,
+    tabCapture, tabs, topSites, tts, unsandboxedPlugins, virtualKeyboard,
+    vpnProvider, wallpaper, webNavigation, webRequest, window
 */
 
-"use strict";
+/*jslint browser, white */
 
 (function () {
+    "use strict";
+
     // promisify accepts a method that itself expects a callback function and
     // returns a Promise-returning version of said method.  If the resulting
     // method receives a function as its last parameter, the orignal callback
@@ -13,7 +30,7 @@
     function promisify(fn, context) {
 
         return function () {
-            const args = Array.prototype.slice.call(arguments);
+            var args = Array.prototype.slice.call(arguments);
             // This can eventually be replaced with Array.from(arguments)
 
             // If the last argument is a function, assume the method is being
@@ -33,7 +50,6 @@
 
                     if (arguments.length > 1) {
                         value = Array.prototype.slice.call(value);
-                        // This can also be replaced with Array.from eventually
                     }
 
                     resolve(value);
@@ -44,40 +60,35 @@
         };
     }
 
-    function replace_methods(object, methods) {
-        methods.forEach(function (name) {
-            const fn = object[name];
+    function replace(original, replacement) {
+        var keys = Object.keys(replacement);
 
-            if (typeof fn !== "function") {
+        keys.forEach(function (key) {
+            var value = replacement[key];
+            var method = original[key];
+
+            if (method === undefined) {
+                // Chrome has no API with key so it cannot be replaced
                 return;
             }
 
-            object[name] = promisify(fn, object);
+            if (typeof value === "function") {
+                if (typeof method !== "function") {
+                    // If the api is not a method, don't replace it
+                    return;
+                }
+
+                original[key] = promisify(method, original);
+                return;
+            }
+
+            if (method !== undefined && typeof method !== "function") {
+                replace(method, value);
+            }
         });
     }
 
-    function iterate(object, collection) {
-        for (let key in collection) {
-            if (!collection.hasOwnProperty(key)) {
-                continue;
-            }
-
-            if (!object.hasOwnProperty(key)) {
-                continue;
-            }
-
-            // collection is an array of method names to promisify
-            if (Array.isArray(collection[key])) {
-                replace_methods(object[key], collection[key]);
-
-                // collection is a sub API that may also have method names to promisify
-            } else if (typeof collection[key] === "object") {
-                iterate(object[key], collection[key]);
-            }
-        }
-    }
-
-    let apis = {
+    var apis = {
         accessibilityFeatures: {
             animationPolicy: [
                 "clear",
@@ -470,5 +481,5 @@
         signedInDevices: [
             "get"]};
 
-    iterate(chrome, apis);
+    replace(apis, chrome);
 }());
