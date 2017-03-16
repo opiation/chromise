@@ -16,7 +16,7 @@ if (typeof lastArgument === "function") {
 
 ### Using the Promise form
 With the Promise form, the original API is invoked with a custom callback method and a promise is returned.  [`chrome.runtime.lastError`][2] is defined when an error is encountered with a given Chrome API.  If this is the case when the custom callback is invoked, the promise is rejected with the value of `chrome.runtime.lastError`.  Otherwise, the promise is resolved with the value(s) passed to the callback.  
-> Note that if the API is successful and the callback is invoked with more than 1 arguments, the promise is resolved with the all the callback arguments passed as an array since native promises will not pass on additional arguments to functions pending their resolution.
+> Note that if the API is successful and the callback is invoked with more than 1 argument, the promise is resolved with the all the callback arguments passed as an array since native promises will not pass on additional arguments to functions awaiting their resolution.
 
 #### Custom callback
 ```javascript
